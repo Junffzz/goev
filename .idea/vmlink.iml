@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="EMPTY_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/client_app/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/desktop/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/api/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/common/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/component/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/native/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/sockets/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/utility/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/app/client_app/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/app/desktop/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/app/kernel/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/app/native/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/app/sockets/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/app/utility/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/rsmpeg/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/rsmpeg/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/rusty_ffmpeg/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/rusty_ffmpeg/src" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

@@ -1,0 +1,48 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+participant mirrorX_UI as ui
+participant mirrorX_core as core
+participant 子函数 as fn #f0f0f0
+participant 子函数2 as fn2 #f0f0f0
+participant mirrorX_native as native
+
+
+ui->core: visit_desktop=true: \n render_frame_rx = create_desktop_active_endpoint_client(endpoint_id,EndPointStream.TCP(remote_addr))
+' endpoint_id = EndPointID::包含本地远端设备信息，本地远端ip:port
+' stream = EndPointStream::ActiveTCP(endpoint_addr)
+'
+core->core: step1.mpsc桌面帧-> video_frame_tx = serve_video_decode(endpoint_id, render_frame_tx) \n线程解码帧数据
+core->core: step2.mpsc音频帧-> serve_audio_decode(endpoint_id, audio_frame_rx) \n线程解码音频帧
+
+'video_frame_tx 传递到子函数中，用于视频帧在内部屏幕抓取厚编码传输
+'audio_frame_tx 同理
+core->core: step3:EndPointClient::new_desktop_active(endpoint_id,key_pair,stream,\n video_frame_tx,audio_frame_tx,visit_credentials)\n 创建一个桌面激活客户端, 包含建立长链 用于传输数据帧给客户端
+core->core: EndPointClient::create():
+core-->fn: 1.建立对应流长链(tx,rx) = match stream{}
+fn-->fn: (tx,rx) = match stream{\n \t EndPointStream::ActiveTCP =>{\n \t\t async tcp.serve_tcp() 建立长链 \n\t} \n}
+core-->fn: 2.params = serve_active_negotiate(tx,rx) 协商协议(设置H264、码率)
+fn-->fn: 1.发送消息tx.send() \n 2.negotiate_response = rx.recv() => params 接收者的二进制流数据转换为参数
+fn-->fn: 3.发送NegotiateFinishedRequest，\n tx.send(negotiate_request_buffer) 此处标记EndPointMessage::NegotiateFinishedRequest请求类型，\n在handle_message()中解析对应的message请求（为了循环截图推流准备）
+core->fn:3.处理帧流handle_message(client.clone(), rx, video_frame_tx, audio_frame_tx)
+fn-->fn: 循环处理message=rx.recv()数据流loop: \n match message=>EndPointMessage枚举
+fn-->fn: message匹配EndPointMessage::NegotiateFinishedRequest类型=> \nhandle_negotiate_finished_request() {\n \t 视频帧spawn_desktop_capture_and_encode_process(client.clone());\n \t 语音帧spawn_audio_capture_and_encode_process(client);\n}
+
+fn->fn2: 桌面视频帧spawn_desktop_capture_and_encode_process
+fn2-->fn2: 1.收集显示器信息 monitors=get_active_monitors()
+fn2-->fn2: 2.线程1：循环捕获屏幕loop:duplicator.capture(){capture_frame_tx.blocking_send(capture_frame)管道发送截图帧}
+fn2->fn2: 3.线程2：接受截图帧loop: capture_frame_rx.blocking_recv() \n capture_frame编码：/component/video_encoder/encoder.rs#L43 \n encode内部调用client.blocking_send()发送桌面帧消息
+
+fn->fn2: 音频帧spawn_audio_capture_and_encode_process
+fn2-->fn2: 初始化音频记录流(stream, mut rx) = match new_record_stream_and_rx()
+fn2-->fn2: loop audio_encoder = AudioEncoder::default()
+fn2-->fn2: loop rx.blocking_recv()\n\t->audio_encoder.encode(audio_frame)\n\t->client.blocking_send()
+fn-->core: video_frame、audio_frame通过client.send传输后，handle_message接收到message，match到对应的类型进行client.send() （走TCP网络传输）
+core-->core:render_frame_rx接收视频帧->ffmpeg解码
+core-->core:audio_frame_rx接收语音帧
+
+
+ui->ui:帧流数据在egui展示 egui.create_window()\n::create_desktop_window(endpoint_id,client,render_frame_rx)
+
+
+@enduml
