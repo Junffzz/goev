@@ -11,7 +11,7 @@ use self::{
     },
 };
 use super::{
-    config::LocalStorage,
+    repository::LocalStorage,
     endpoint::{create_passive_endpoint_client, id::EndPointID},
 };
 use crate::{
@@ -279,226 +279,234 @@ impl SignalingClient {
     }
 
     // see https://github.com/rust-lang/rust-clippy/pull/9496, which was merged but not release
-    #[allow(clippy::never_loop)]
-    pub async fn subscribe(
-        &mut self,
-        addrs: Vec<SocketAddr>,
-        device_id: i64,
-        device_finger_print: &str,
-        storage: LocalStorage,
-    ) -> CoreResult<()> {
-        let subscription_bytes = Bytes::from(bincode_serialize(&Subscription {
-            device_id,
-            device_finger_print: device_finger_print.to_string(),
-        })?);
-
-        for addr in addrs {
-            let Ok(Ok(stream)) = tokio::time::timeout(
-                Duration::from_secs(10),
-                tokio::net::TcpStream::connect(addr),
-            )
-            .await else {
-                continue;
-            };
-
-            let mut framed_stream = Framed::new(
-                stream,
-                LengthDelimitedCodec::builder()
-                    .length_field_length(2)
-                    .little_endian()
-                    .new_codec(),
-            );
-
-            framed_stream.send(subscription_bytes.clone()).await?;
-
-            let (sink, stream) = framed_stream.split();
-            let (tx, rx) = tokio::sync::mpsc::channel(1);
-
-            tokio::spawn(serve_connection(rx, sink, stream, storage.clone()));
-
-            self.subscribe_tx = Some(tx);
-
-            return Ok(());
-        }
-
-        Err(core_error!("non addr usable"))
-    }
+    // #[allow(clippy::never_loop)]
+    // pub async fn subscribe(
+    //     &mut self,
+    //     addrs: Vec<SocketAddr>,
+    //     device_id: i64,
+    //     device_finger_print: &str,
+    //     storage: LocalStorage,
+    // ) -> CoreResult<()> {
+    //     /*
+    //     段代码定义了一个名为 subscribe 的异步函数，它接收四个参数：一个 SocketAddr 向量 addrs，一个设备 ID device_id，一个设备指纹 device_finger_print，以及一个 LocalStorage 对象 storage。这个函数的主要目的是订阅一个或多个地址。
+    //     首先，它创建了一个 Subscription 对象，并将其序列化为字节，存储在 subscription_bytes 中。
+    //     然后，它遍历 addrs 中的每个地址。对于每个地址，它尝试建立一个 TCP 连接，如果连接失败或超时（超过10秒），它将跳过当前地址并尝试下一个地址。
+    //     如果连接成功，它将创建一个帧流 framed_stream，并发送 subscription_bytes。然后，它将帧流分割为 sink 和 stream，并创建一个单向通道。
+    //     接着，它在新的任务中运行 serve_connection 函数，处理接收到的消息和发送的消息。
+    //     最后，它将通道的发送端 tx 存储在 self.subscribe_tx 中，并返回成功。如果所有地址都无法使用，它将返回一个错误。
+    //     */
+    //     let subscription_bytes = Bytes::from(bincode_serialize(&Subscription {
+    //         device_id,
+    //         device_finger_print: device_finger_print.to_string(),
+    //     })?);
+    //
+    //     for addr in addrs {
+    //         let Ok(Ok(stream)) = tokio::time::timeout(
+    //             Duration::from_secs(10),
+    //             tokio::net::TcpStream::connect(addr),
+    //         )
+    //         .await else {
+    //             continue;
+    //         };
+    //
+    //         let mut framed_stream = Framed::new(
+    //             stream,
+    //             LengthDelimitedCodec::builder()
+    //                 .length_field_length(2)
+    //                 .little_endian()
+    //                 .new_codec(),
+    //         );
+    //
+    //         framed_stream.send(subscription_bytes.clone()).await?;
+    //
+    //         let (sink, stream) = framed_stream.split();
+    //         let (tx, rx) = tokio::sync::mpsc::channel(1);
+    //
+    //         tokio::spawn(serve_connection(rx, sink, stream, storage.clone()));
+    //
+    //         self.subscribe_tx = Some(tx);
+    //
+    //         return Ok(());
+    //     }
+    //
+    //     Err(core_error!("non addr usable"))
+    // }
 }
 
-async fn serve_connection(
-    mut rx: tokio::sync::mpsc::Receiver<Bytes>,
-    mut sink: SplitSink<Framed<TcpStream, LengthDelimitedCodec>, Bytes>,
-    mut stream: SplitStream<Framed<TcpStream, LengthDelimitedCodec>>,
-    storage: LocalStorage,
-) {
-    let mut ticker = tokio::time::interval(Duration::from_secs(60));
-    let mut last_ping = None;
-    let mut last_ping_value = 0;
+// async fn serve_connection(
+//     mut rx: tokio::sync::mpsc::Receiver<Bytes>,
+//     mut sink: SplitSink<Framed<TcpStream, LengthDelimitedCodec>, Bytes>,
+//     mut stream: SplitStream<Framed<TcpStream, LengthDelimitedCodec>>,
+//     storage: LocalStorage,
+// ) {
+//     let mut ticker = tokio::time::interval(Duration::from_secs(60));
+//     let mut last_ping = None;
+//     let mut last_ping_value = 0;
+//
+//     loop {
+//         let buffer = tokio::select! {
+//             _ = ticker.tick() => {
+//                 if last_ping.is_some() {
+//                     return;
+//                 }
+//
+//                 let value = generate_random_ping_value();
+//                 if let Ok(buffer) = bincode_serialize(&ClientMessage::Ping(value)){
+//                     if (sink.send(Bytes::from(buffer)).await).is_ok() {
+//                         last_ping = Some(std::time::Instant::now());
+//                         last_ping_value = value;
+//                         continue;
+//                     }
+//                 }
+//
+//                 return;
+//             }
+//             buffer = rx.recv() => {
+//                 if let Some(buffer) = buffer {
+//                     let _ = sink.send(buffer).await;
+//                     continue;
+//                 } else {
+//                     return;
+//                 }
+//             },
+//             buffer = stream.next() => {
+//                 let Some(Ok(buffer)) = buffer else {
+//                     return;
+//                 };
+//
+//                 buffer
+//             }
+//         };
+//
+//         let Ok(server_message) = bincode_deserialize::<ServerMessage>(&buffer) else {
+//             return;
+//         };
+//
+//         match server_message {
+//             ServerMessage::Pong(value) => {
+//                 if value != last_ping_value {
+//                     return;
+//                 }
+//
+//                 if let Some(instant) = last_ping.take() {
+//                     if instant.elapsed().as_secs() > 60 {
+//                         return;
+//                     }
+//                 }
+//             }
+//             ServerMessage::VisitRequest {
+//                 active_device_id,
+//                 passive_device_id,
+//                 visit_desktop: _,
+//                 endpoint_addr,
+//                 password_salt,
+//                 secret,
+//                 secret_nonce,
+//                 passive_visit_credentials,
+//             } => {
+//                 let storage = storage.clone();
+//                 let (tx, rx) = tokio::sync::oneshot::channel();
+//                 tokio::spawn(async move {
+//                     let result = serve_visit_request(
+//                         storage,
+//                         active_device_id,
+//                         passive_device_id,
+//                         endpoint_addr,
+//                         // visit_desktop,
+//                         password_salt,
+//                         secret,
+//                         secret_nonce,
+//                         passive_visit_credentials,
+//                     )
+//                     .await;
+//
+//                     let response = ClientMessage::VisitResponse {
+//                         active_device_id,
+//                         passive_device_id,
+//                         result,
+//                     };
+//
+//                     let buffer = match bincode_serialize(&response) {
+//                         Ok(buffer) => buffer,
+//                         Err(err) => {
+//                             tracing::error!(?err, "serialize visit response failed");
+//                             return;
+//                         }
+//                     };
+//
+//                     let _ = tx.send(buffer);
+//                 });
+//
+//                 match rx.await {
+//                     Ok(buffer) => {
+//                         if let Err(err) = sink.send(Bytes::from(buffer)).await {
+//                             tracing::error!(?err, "reply visit failed");
+//                         }
+//                     }
+//                     Err(err) => {
+//                         tracing::error!(
+//                             ?err,
+//                             "receive key exchange result failed, this shouldn't happen!"
+//                         );
+//                     }
+//                 }
+//             }
+//         }
+//     }
+// }
 
-    loop {
-        let buffer = tokio::select! {
-            _ = ticker.tick() => {
-                if last_ping.is_some() {
-                    return;
-                }
-
-                let value = generate_random_ping_value();
-                if let Ok(buffer) = bincode_serialize(&ClientMessage::Ping(value)){
-                    if (sink.send(Bytes::from(buffer)).await).is_ok() {
-                        last_ping = Some(std::time::Instant::now());
-                        last_ping_value = value;
-                        continue;
-                    }
-                }
-
-                return;
-            }
-            buffer = rx.recv() => {
-                if let Some(buffer) = buffer {
-                    let _ = sink.send(buffer).await;
-                    continue;
-                } else {
-                    return;
-                }
-            },
-            buffer = stream.next() => {
-                let Some(Ok(buffer)) = buffer else {
-                    return;
-                };
-
-                buffer
-            }
-        };
-
-        let Ok(server_message) = bincode_deserialize::<ServerMessage>(&buffer) else {
-            return;
-        };
-
-        match server_message {
-            ServerMessage::Pong(value) => {
-                if value != last_ping_value {
-                    return;
-                }
-
-                if let Some(instant) = last_ping.take() {
-                    if instant.elapsed().as_secs() > 60 {
-                        return;
-                    }
-                }
-            }
-            ServerMessage::VisitRequest {
-                active_device_id,
-                passive_device_id,
-                visit_desktop: _,
-                endpoint_addr,
-                password_salt,
-                secret,
-                secret_nonce,
-                passive_visit_credentials,
-            } => {
-                let storage = storage.clone();
-                let (tx, rx) = tokio::sync::oneshot::channel();
-                tokio::spawn(async move {
-                    let result = serve_visit_request(
-                        storage,
-                        active_device_id,
-                        passive_device_id,
-                        endpoint_addr,
-                        // visit_desktop,
-                        password_salt,
-                        secret,
-                        secret_nonce,
-                        passive_visit_credentials,
-                    )
-                    .await;
-
-                    let response = ClientMessage::VisitResponse {
-                        active_device_id,
-                        passive_device_id,
-                        result,
-                    };
-
-                    let buffer = match bincode_serialize(&response) {
-                        Ok(buffer) => buffer,
-                        Err(err) => {
-                            tracing::error!(?err, "serialize visit response failed");
-                            return;
-                        }
-                    };
-
-                    let _ = tx.send(buffer);
-                });
-
-                match rx.await {
-                    Ok(buffer) => {
-                        if let Err(err) = sink.send(Bytes::from(buffer)).await {
-                            tracing::error!(?err, "reply visit failed");
-                        }
-                    }
-                    Err(err) => {
-                        tracing::error!(
-                            ?err,
-                            "receive key exchange result failed, this shouldn't happen!"
-                        );
-                    }
-                }
-            }
-        }
-    }
-}
-
-#[allow(clippy::too_many_arguments)]
-async fn serve_visit_request(
-    storage: LocalStorage,
-    active_device_id: i64,
-    passive_device_id: i64,
-    endpoint_addr: String,
-    password_salt: Vec<u8>,
-    secret: Vec<u8>,
-    secret_nonce: Vec<u8>,
-    passive_visit_credentials: Vec<u8>,
-) -> Result<Vec<u8>, VisitFailureReason> {
-    let Ok(domain) = storage.domain().get_primary_domain() else {
-        return Err(VisitFailureReason::InternalError);
-    };
-
-    let Ok(endpoint_addr) = endpoint_addr.parse::<SocketAddr>() else {
-        return Err(VisitFailureReason::InternalError);
-    };
-
-    let (secret, sealing_key, opening_key) = match key_agreement(
-        &domain.password,
-        active_device_id,
-        password_salt,
-        secret,
-        secret_nonce,
-    )
-    .await
-    {
-        Ok(v) => v,
-        Err(err) => {
-            return Err(err);
-        }
-    };
-
-    tokio::spawn(async move {
-        if let Err(err) = create_passive_endpoint_client(
-            EndPointID::DeviceID {
-                local_device_id: passive_device_id,
-                remote_device_id: active_device_id,
-            },
-            Some((opening_key, sealing_key)),
-            crate::api::endpoint::EndPointStream::ActiveTCP(endpoint_addr),
-            Some(passive_visit_credentials),
-        )
-        .await
-        {
-            tracing::error!(?err, "create passive endpoint client failed");
-        }
-    });
-
-    Ok(secret)
-}
+// #[allow(clippy::too_many_arguments)]
+// async fn serve_visit_request(
+//     storage: LocalStorage,
+//     active_device_id: i64,
+//     passive_device_id: i64,
+//     endpoint_addr: String,
+//     password_salt: Vec<u8>,
+//     secret: Vec<u8>,
+//     secret_nonce: Vec<u8>,
+//     passive_visit_credentials: Vec<u8>,
+// ) -> Result<Vec<u8>, VisitFailureReason> {
+//     let Ok(domain) = storage.domain().get_primary_domain() else {
+//         return Err(VisitFailureReason::InternalError);
+//     };
+//
+//     let Ok(endpoint_addr) = endpoint_addr.parse::<SocketAddr>() else {
+//         return Err(VisitFailureReason::InternalError);
+//     };
+//
+//     let (secret, sealing_key, opening_key) = match key_agreement(
+//         &domain.password,
+//         active_device_id,
+//         password_salt,
+//         secret,
+//         secret_nonce,
+//     )
+//     .await
+//     {
+//         Ok(v) => v,
+//         Err(err) => {
+//             return Err(err);
+//         }
+//     };
+//
+//     tokio::spawn(async move {
+//         if let Err(err) = create_passive_endpoint_client(
+//             EndPointID::DeviceID {
+//                 local_device_id: passive_device_id,
+//                 remote_device_id: active_device_id,
+//             },
+//             Some((opening_key, sealing_key)),
+//             crate::api::endpoint::EndPointStream::ActiveTCP(endpoint_addr),
+//             Some(passive_visit_credentials),
+//         )
+//         .await
+//         {
+//             tracing::error!(?err, "create passive endpoint client failed");
+//         }
+//     });
+//
+//     Ok(secret)
+// }
 
 async fn key_agreement(
     domain_password: &str,

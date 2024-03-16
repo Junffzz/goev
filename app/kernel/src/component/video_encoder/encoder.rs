@@ -13,7 +13,7 @@ use crate::{
 //     codecs::{avcodec::*, codec::*, packet::*},
 //     utils::{error::*, frame::*, imgutils::*, log::*, pixfmt::*, rational::AVRational},
 // };
-use rsmpeg::ffi::*;
+use app_native::ffmpeg_ffi::*;
 use std::sync::Arc;
 
 pub struct VideoEncoder<T>

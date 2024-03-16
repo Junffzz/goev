@@ -10,7 +10,7 @@ use crate::{core_error, error::CoreResult};
 //         opt::av_opt_set,
 //     },
 // };
-use rsmpeg::ffi::{AVCodecContext,AVCodecID,AVERROR,AVERROR_OPTION_NOT_FOUND,av_opt_set};
+use app_native::ffmpeg_ffi::{AVCodecContext,AVCodecID,AVERROR,AVERROR_OPTION_NOT_FOUND,av_opt_set};
 use std::ffi::CString;
 
 pub trait EncoderConfig {

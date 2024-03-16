@@ -22,7 +22,7 @@ pub unsafe fn prepare_desktop() -> CoreResult<()> {
     }
 
     if !SetThreadDesktop(current_desktop).as_bool() {
-        return Err(core_error!("SetThreadDesktop set current desktop failed"));
+        return Err(core_error!("SetThreadDesktop set current screen failed"));
     }
 
     Ok(())

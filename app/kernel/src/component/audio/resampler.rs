@@ -1,6 +1,6 @@
 use crate::{core_error, error::CoreResult};
 use cpal::SampleFormat;
-use rsmpeg::ffi::*;
+use app_native::ffmpeg_ffi::*;
 // use app_native::ffmpeg::{
 //     swresample::*,
 //     utils::{channel_layout::*, mathematics::*, mem::av_freep, opt::*, samplefmt::*},

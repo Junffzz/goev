@@ -148,7 +148,7 @@ pub fn read_icon(path: &Path) -> CoreResult<Vec<u8>> {
             image::ImageOutputFormat::Png,
         ) {
             return Err(core_error!(
-                "write desktop screenshot image buffer failed ({})",
+                "write screen screenshot image buffer failed ({})",
                 err
             ));
         }

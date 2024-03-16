@@ -1,6 +1,6 @@
 use super::{set_codec_ctx_option, EncoderConfig};
 use crate::error::CoreResult;
-use rsmpeg::ffi::{AVCodecContext,AVCodecID,AV_CODEC_ID_HEVC};
+use app_native::ffmpeg_ffi::{AVCodecContext,AVCodecID,AV_CODEC_ID_HEVC};
 use std::ffi::CString;
 
 pub struct HEVCVideoToolboxConfig {

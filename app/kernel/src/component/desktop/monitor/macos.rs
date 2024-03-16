@@ -25,6 +25,15 @@ pub fn get_primary_monitor_params() -> CoreResult<Monitor> {
     Err(core_error!("no primary display"))
 }
 
+/*
+这段代码定义了一个函数get_active_monitors，它的作用是获取当前活动的显示器信息。这个函数接收一个布尔参数take_screen_shot，如果为true，则会为每个显示器获取一张屏幕截图。
+首先，函数获取主显示器的ID，然后获取所有的屏幕对象。
+然后，函数创建一个空的displays向量，用于存储获取到的显示器信息。
+接着，函数遍历所有的屏幕对象。对于每个屏幕对象，函数获取其显示器ID，然后使用这个ID获取显示器的宽度和高度。如果take_screen_shot参数为true，函数还会调用take_screen_shot_as_png函数获取屏幕截图。
+然后，函数创建一个Monitor对象，其中包含了显示器的ID、名称、刷新率、宽度、高度、是否为主显示器、屏幕截图以及显示器的位置信息。这个Monitor对象被添加到displays向量中。
+最后，函数返回displays向量。
+总的来说，这个函数的作用是获取当前活动的显示器信息，包括显示器的ID、名称、刷新率、宽度、高度、是否为主显示器、屏幕截图以及显示器的位置信息。如果函数的参数为true，则还会为每个显示器获取一张屏幕截图。
+*/
 pub fn get_active_monitors(take_screen_shot: bool) -> CoreResult<Vec<Monitor>> {
     unsafe {
         let main_display_id = CGMainDisplayID();
@@ -36,9 +45,11 @@ pub fn get_active_monitors(take_screen_shot: bool) -> CoreResult<Vec<Monitor>> {
             let display_id = ns_screen.screenNumber();
 
             let monitor_width = CGDisplayPixelsWide(display_id);
-            let monitor_height = CGDisplayPixelsHigh(display_id);
+            // let monitor_height = CGDisplayPixelsHigh(display_id);
+            let monitor_height=                966;
 
             let screen_shot_buffer = if take_screen_shot {
+                // 获取屏幕截图
                 take_screen_shot_as_png(display_id)
             } else {
                 None

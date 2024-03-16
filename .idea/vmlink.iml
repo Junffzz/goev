@@ -12,16 +12,17 @@
       <sourceFolder url="file://$MODULE_DIR$/src/sockets/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/utility/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/app/client_app/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/app/desktop/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/app/kernel/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/app/native/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/app/sockets/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/app/utility/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/rsmpeg/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/rsmpeg/tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/rusty_ffmpeg/examples" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/rusty_ffmpeg/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/app/enter/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/rsmpeg1/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/rsmpeg1/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/rusty_ffmpeg1/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/rusty_ffmpeg1/src" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/.idea/copilot/chatSessions" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

@@ -12,7 +12,7 @@ mod macos;
 #[cfg(target_os = "macos")]
 pub use macos::{get_active_monitors, get_primary_monitor_params, NSScreen};
 
-#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Default,Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
 pub struct Monitor {
     pub id: String,
     pub name: String,

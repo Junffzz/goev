@@ -18,7 +18,7 @@ pub fn new_record_stream_and_rx() -> CoreResult<(Stream, Receiver<AudioEncodeFra
     tracing::info!(name = ?device.name(), "select default audio output device");
 
     let config = device.default_output_config()?;
-    tracing::info!(?config, "audio default output config");
+    tracing::info!(?config, "audio default output repository");
 
     let channels = config.channels();
     let sample_format = config.sample_format();

@@ -79,10 +79,12 @@ impl Duplicator {
 
             let block = block.copy();
 
+            // Mac平台屏幕获取
             let display_stream = CGDisplayStreamCreateWithDispatchQueue(
                 screen.screenNumber(),
                 screen_size.width as usize,
-                screen_size.height as usize,
+                // screen_size.height as usize, //todo: 处理高度不能被2整除问题（ffmpeg限制） height not divisible by 2
+                ((screen_size.height as usize / 2) + 1) * 2,
                 kCVPixelFormatType_420YpCbCr8BiPlanarFullRange as i32,
                 std::ptr::null_mut(),
                 dispatch_queue,
@@ -193,7 +195,7 @@ unsafe fn frame_available_handler(
     };
 
     if (*capture_frame_tx).blocking_send(capture_frame).is_err() {
-        tracing::error!("desktop capture frame tx send failed");
+        tracing::error!("screen capture frame tx send failed");
     }
 
     let dropped_frames = CGDisplayStreamUpdateGetDropCount(update_ref);

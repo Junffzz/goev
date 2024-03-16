@@ -39,7 +39,7 @@ pub fn new_play_stream_and_tx(
         ?channels,
         ?sample_format,
         ?sample_rate,
-        "select audio stream config"
+        "select audio stream repository"
     );
 
     let output_config = StreamConfig {

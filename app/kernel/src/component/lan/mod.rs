@@ -25,14 +25,14 @@ pub struct Node {
 
 pub struct LANProvider {
     nodes_cache: Arc<RwLock<FxHashMap<String, Node>>>,
-    discoverable: Arc<AtomicBool>,
+    discoverable: Arc<AtomicBool>, // 是否可被发现，UI可以设置开关
     _discovers: Vec<discover::Discover>,
     _server: server::Server,
 }
 
 impl LANProvider {
     pub async fn new() -> CoreResult<Self> {
-        let hostname = format!("{}.mirrorx.lan", get_hostname()?);
+        let hostname = format!("{}.nextRiftXRDesktop.lan", get_hostname()?);
         let mut discovers = Vec::new();
         let discoverable = Arc::new(AtomicBool::new(true));
         let (packet_tx, packet_rx) = tokio::sync::mpsc::channel(64);
@@ -66,7 +66,7 @@ impl LANProvider {
 
         let server = server::Server::new().await?;
         let nodes_cache = Arc::new(RwLock::new(FxHashMap::default()));
-
+        // 服务管理局域网中的节点
         serve_discover_nodes(hostname, nodes_cache.clone(), packet_rx);
 
         Ok(LANProvider {
@@ -92,6 +92,7 @@ impl LANProvider {
     }
 }
 
+// 管理局域网中的节点, 服务端
 fn serve_discover_nodes(
     self_hostname: String,
     nodes_cache: Arc<RwLock<FxHashMap<String, Node>>>,
@@ -101,6 +102,7 @@ fn serve_discover_nodes(
     tokio::spawn(async move {
         loop {
             tokio::select! {
+                // 每10秒清理一次超时节点
                 _ = ticker.tick() => clear_timeout_nodes(nodes_cache.clone()).await,
                 packet = packet_rx.recv() => match packet {
                     Some(packet) => update_nodes(&self_hostname, nodes_cache.clone(), packet).await,

@@ -19,6 +19,7 @@ pub struct NegotiateFinishedRequest {
 }
 
 pub fn handle_negotiate_finished_request(client: Arc<EndPointClient>) {
+    // 启动一个线程，用于获取屏幕信息，然后启动一个线程，用于获取音频信息
     spawn_desktop_capture_and_encode_process(client.clone());
     spawn_audio_capture_and_encode_process(client);
 }
@@ -31,7 +32,7 @@ fn spawn_desktop_capture_and_encode_process(client: Arc<EndPointClient>) {
         tracing::info_span!("desktop_capture_and_encode_process", client = ?client);
 
         defer! {
-            tracing::info!("desktop capture process exit");
+            tracing::info!("screen capture process exit");
         }
 
         let monitors = match get_active_monitors(false) {
@@ -80,7 +81,7 @@ fn spawn_desktop_capture_and_encode_process(client: Arc<EndPointClient>) {
         // PASSIVE_ENDPOINTS_MONITORS.insert(client.id, select_monitor);
 
         if let Err(err) = duplicator.start() {
-            tracing::error!(?err, "desktop capture process start failed");
+            tracing::error!(?err, "screen capture process start failed");
             return;
         }
 
@@ -91,9 +92,10 @@ fn spawn_desktop_capture_and_encode_process(client: Arc<EndPointClient>) {
         loop {
             match capture_frame_rx.blocking_recv() {
                 Some(capture_frame) => {
+                    // 屏幕获取后编码+发送
                     if let Err(err) = encoder.encode(capture_frame) {
                         if let CoreError::OutgoingMessageChannelDisconnect = err {
-                            tracing::info!("desktop capture and encode process exit");
+                            tracing::info!("screen capture and encode process exit");
                             return;
                         } else {
                             tracing::error!("video encode failed");
@@ -124,7 +126,7 @@ fn spawn_desktop_capture_and_encode_process(client: Arc<EndPointClient>) {
 
     tokio::task::spawn_blocking(move || {
         defer! {
-            tracing::info!( "desktop capture process exit");
+            tracing::info!( "screen capture process exit");
         }
 
         let primary_monitor = monitors.iter().find(|monitor| monitor.is_primary);
@@ -146,7 +148,7 @@ fn spawn_desktop_capture_and_encode_process(client: Arc<EndPointClient>) {
                     }
                 }
                 Err(err) => {
-                    tracing::error!(?err, "desktop duplicator capture failed");
+                    tracing::error!(?err, "screen duplicator capture failed");
                     break;
                 }
             };
@@ -173,7 +175,7 @@ fn spawn_desktop_capture_and_encode_process(client: Arc<EndPointClient>) {
                     Some(capture_frame) => {
                         if let Err(err) = encoder.encode(capture_frame) {
                             if let CoreError::OutgoingMessageChannelDisconnect = err {
-                                tracing::info!("desktop capture and encode process exit");
+                                tracing::info!("screen capture and encode process exit");
                                 return;
                             } else {
                                 tracing::error!(?err, "video encode failed");

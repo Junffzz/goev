@@ -1,6 +1,6 @@
 use super::{set_codec_ctx_option, EncoderConfig};
 use crate::error::CoreResult;
-use rsmpeg::ffi::{AVCodecContext,AVCodecID,AV_CODEC_ID_H264};
+use app_native::ffmpeg_ffi::{AVCodecContext,AVCodecID,AV_CODEC_ID_H264};
 use std::ffi::CString;
 
 pub struct H264VideoToolboxConfig {

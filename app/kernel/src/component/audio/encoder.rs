@@ -7,7 +7,7 @@ use crate::{
 };
 use cpal::SampleFormat;
 use app_native::{opus::encoder::*};
-use rsmpeg::ffi::AV_SAMPLE_FMT_FLT;
+use app_native::ffmpeg_ffi::AV_SAMPLE_FMT_FLT;
 
 pub struct AudioEncoder {
     opus_encoder: *mut OpusEncoder,

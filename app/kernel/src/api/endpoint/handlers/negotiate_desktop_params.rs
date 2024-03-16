@@ -16,7 +16,7 @@ pub async fn handle_negotiate_desktop_params_request(
     req: EndPointNegotiateDesktopParamsRequest,
 ) {
     let resp = negotiate_media_params(&client, req).await;
-
+    // 接收者在serve_active_negotiate()里，会响应被动端的primary_monitor
     if let Err(err) = client
         .send(&EndPointMessage::NegotiateDesktopParamsResponse(resp))
         .await
@@ -41,9 +41,7 @@ async fn negotiate_media_params(
             return EndPointNegotiateDesktopParamsResponse::MonitorError(err.to_string());
         }
     };
-
     client.set_monitor(primary_monitor.clone()).await;
-
     let params = EndPointNegotiateVisitDesktopParams {
         video_codec: VideoCodec::H264,
         os_type: String::from(""),

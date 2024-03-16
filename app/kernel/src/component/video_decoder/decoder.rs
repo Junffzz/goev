@@ -8,7 +8,7 @@ use crate::{
 //     codecs::{avcodec::*, codec::*, codec_id::*, packet::*},
 //     utils::{buffer::*, error::*, frame::*, hwcontext::*, pixfmt::*, rational::AVRational},
 // };
-use rsmpeg::ffi::*;
+use app_native::ffmpeg_ffi::*;
 use tokio::sync::mpsc::Sender;
 
 pub struct VideoDecoder {
@@ -69,6 +69,7 @@ impl VideoDecoder {
             }
 
             loop {
+                // 接收并处理解码数据
                 ret = avcodec_receive_frame(
                     (decode_context).codec_ctx,
                     (decode_context).decode_frame,
@@ -86,23 +87,27 @@ impl VideoDecoder {
                 let tmp_frame = if (*decode_context.codec_ctx).hw_device_ctx.is_null() {
                     decode_context.decode_frame
                 } else {
-                    // let transfer_instant = std::time::Instant::now();
-                    let ret = av_hwframe_transfer_data(
-                        (decode_context).hw_decode_frame,
-                        (decode_context).decode_frame,
-                        0,
-                    );
-                    // let cost = transfer_instant.elapsed();
-                    // tracing::info!(?cost, "hardware decode frame transfer cost");
-
-                    if ret < 0 {
-                        return Err(core_error!(
-                            "av_hwframe_transfer_data returns error code: {}",
-                            ret
-                        ));
-                    }
-
-                    (decode_context).hw_decode_frame
+                    decode_context.decode_frame
+                    // todo: 处理硬件编码
+                    /*
+                    av_hwframe_transfer_data 是 FFmpeg 库中的一个函数，用于将数据从一个硬件帧（通常是GPU显存中的数据）转移到一个软件帧中（通常是 CPU 内存中的数据）。这个函数在硬件加速编码和解码过程中非常重要，因为硬件解码出来的帧不在内存中，而是在显存中，所以需要使用 av_hwframe_transfer_data 函数将帧拷贝到内存中，才能进行后续的处理和渲染在 FFmpeg 的编解码过程中，av_hwframe_transfer_data 函数被调用来将数据从硬件帧转移到软件帧中，这样可以实现 GPU 和 CPU 之间的数据拷贝。这个函数的参数包括要转移数据的硬件帧、要接受数据的软件帧，以及一个标志位，用于指定是否需要将数据直接复制到软件帧的数据缓冲区中在使用 FFmpeg 进行硬件加速编码时，av_hwframe_transfer_data 函数被调用来将数据从软件帧转移到硬件帧中，这样可以实现数据的硬件加速编码。在这个过程中，先将数据从软件帧中拷贝到硬件帧中，然后再进行硬件加速编码。最终的编码结果会保存在硬件帧中，可以直接写入输出文件或传递给其他编解码器进行后续处理总的来说，av_hwframe_transfer_data 函数是 FFmpeg 库中的一个重要函数，用于实现硬件加速编码和解码的数据拷贝。它在 FFmpeg 的编解码过程中起着非常重要的作用，帮助实现 GPU 和 CPU 之间的数据传输，以及硬件加速编码和解码的实现*/
+                    // // let transfer_instant = std::time::Instant::now();
+                    // let ret = av_hwframe_transfer_data(
+                    //     (decode_context).hw_decode_frame, // 硬件帧
+                    //     (decode_context).decode_frame, // 软件帧
+                    //     0,// 用于指定是否需要将数据直接复制到软件帧的数据缓冲区中
+                    // );
+                    // // let cost = transfer_instant.elapsed();
+                    // // tracing::info!(?cost, "hardware decode frame transfer cost");
+                    //
+                    // if ret < 0 {
+                    //     return Err(core_error!(
+                    //         "av_hwframe_transfer_data returns error code: {}",
+                    //         ret
+                    //     ));
+                    // }
+                    //
+                    // (decode_context).hw_decode_frame
                 };
 
                 let (plane_data, line_sizes, format) = match (*tmp_frame).format {

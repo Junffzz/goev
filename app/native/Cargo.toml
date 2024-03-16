@@ -5,12 +5,13 @@ edition = "2021"
 build = "build.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[package.metadata.vcpkg]
-dependencies = ["ffmpeg[x264,x265,opus,avcodec,avdevice,avfilter,avformat,swresample,swscale]"]
-git = "https://github.com/microsoft/vcpkg"
-rev = "4a600e9"
+#[package.metadata.vcpkg]
+#dependencies = ["ffmpeg[x264,x265,opus,avcodec,avdevice,avfilter,avformat,swresample,swscale]"]
+#git = "https://github.com/microsoft/vcpkg"
+#rev = "4a600e9"
 
 [dependencies]
+rsmpeg = { git="https://github.com/Junffzz/rsmpeg.git",branch="master", default-features = false, features = ["ffmpeg6"] }
 
 [target.x86_64-apple-darwin.dependencies]
 objc = { version = "0.2.7" }

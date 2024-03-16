@@ -13,11 +13,11 @@ pub fn serve_audio_decode(id: EndPointID, mut decode_rx: Receiver<EndPointAudioF
         tracing::info!(?id, "audio decode process");
 
         let Ok(config) = default_output_config() else {
-            tracing::error!("get default audio output config failed");
+            tracing::error!("get default audio output repository failed");
             return;
         };
 
-        tracing::info!(?config, "default output config");
+        tracing::info!(?config, "default output repository");
 
         let mut audio_decoder = AudioDecoder::new(
             config.channels() as _,
